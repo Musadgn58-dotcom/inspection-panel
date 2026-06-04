@@ -4221,12 +4221,9 @@ function performansHesapla(){
       toplamAdet += kl.toplamAdet;
       toplamKayitFiiliSure += (kl.toplamKayitFiiliSure || 0);
 
-      // Klasman bazında da mesai bazlı hesaplama
-      const klasmanMesaiSuresi = mesaiHesap && mesaiHesap.toplamMesaiSaniye > 0 
-        ? mesaiHesap.toplamMesaiSaniye 
-        : (kl.toplamKayitFiiliSure || 1);
-      
-      const hizPerf = Math.round((kl.toplamStandartSure / klasmanMesaiSuresi) * 100);
+      // Klasman bazında hızPerf: bu klasmanın standart süresi / tüm inspector standart süresi × genel performans
+      // (Genel performans henüz hesaplanmadığından burada geçici saklarız, aşağıda düzeltiriz)
+      const hizPerf = 0; // placeholder — aşağıda genel performans belli olunca güncellenir
 
       klasmanlarObj[klasman] = {
         adet: kl.toplamAdet,
@@ -4254,6 +4251,15 @@ function performansHesapla(){
       // Hiçbiri yoksa null
       mesaiSureSn = fiiliSureSn; // Gösterim için
       performans = null;
+    }
+
+    // Klasman hizPerf düzeltmesi: her klasmanın standart süresi / toplam standart süre × genel performans
+    // Böylece günün tüm mesaisi tek klasmana yüklenmez; çoklu klasman çalışan inspector'da hakkaniyet sağlanır
+    if (performans !== null && toplamStandartSure > 0) {
+      Object.keys(klasmanlarObj).forEach(k => {
+        const oran = klasmanlarObj[k].standartSure / toplamStandartSure;
+        klasmanlarObj[k].hizPerf = Math.round(oran * performans);
+      });
     }
 
     map[ins] = {
