@@ -76,7 +76,8 @@ body {
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 .top-badge {
   font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
-  background: rgba(33,150,243,.15); color: var(--blue4);
+  background: rgba(33,150,243,.15); color: var(--blue4);<script src="LCW_PATCH_localStorage_fix.js"></script>
+
   border: 1px solid rgba(33,150,243,.2); letter-spacing: .3px;
 }
 .top-clock {
@@ -1651,7 +1652,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbymkAClCnqRdV5dWslp3Jj5AVEV0xbe1GXTbK4fHk6gX3VKWK3CK21DAXVvENFeI1I1nA/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwx7zsKMo2uPPRvmRy0xGykrXuEOeul3y60wtrFjMe9h0W_P_lEmIjr-1x5K1WVp4a3RQ/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',  // Şifre localStorage veya Sheets'ten yüklenir — kaynak kodda saklanmaz
@@ -6203,5 +6204,6 @@ console.log(`✅ LC Waikiki Inspection Performans Paneli v${APP_VERSION} hazır!
 console.log(`📊 ${klasmanlar.length} klasman, ${performansData.length} inspector verisi yüklendi`);
 
 </script>
+  <script src="LCW_PATCH_localStorage_fix.js"></script>
 </body>
 </html>
