@@ -1750,7 +1750,7 @@ function jsonpFetch(url, params) {
         '2. Apps Script kodu v5.1 ile güncellendi ve YENİ dağıtım yapıldı mı?\n' +
         '3. Paneldeki URL doğru mu?'
       ));
-    }, 20000);
+    }, 30000);
 
     function handler(event) {
       // Sadece Apps Script kaynaklarından gelen mesajları kabul et
@@ -1818,18 +1818,24 @@ async function autoFetchOnStartup() {
   }
 
   // ── Performans verisini her zaman çek (tüm kullanıcılar güncel görsün) ──
+let perfData = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      perfData = await jsonpFetch(url, { action: 'getPerformansRaw', token });
+      if (perfData?.status === 'ok' && perfData?.performansData?.length > 0) break;
+      await new Promise(r => setTimeout(r, 2000));
+    } catch(e) { await new Promise(r => setTimeout(r, 2000)); }
+  }
   try {
-    const perfData = await jsonpFetch(url, { action: 'getPerformansRaw', token });
-    if (perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
+    if (perfData && perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
       performansData = restorePerformansDateObjects(perfData.performansData);
       console.log('✅ Performans verisi yüklendi:', performansData.length, 'inspector');
-      // verimlilikPerf yoksa hesapla
-const _hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
-performansData.forEach(row => {
-  if (row.verimlilikPerf === undefined || row.verimlilikPerf === null) {
-    row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-      ? Math.round(row.genelHizPerf * (100 / _hedef)) : null;
-  }
+      const _hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
+      performansData.forEach(row => {
+        if (row.verimlilikPerf === undefined || row.verimlilikPerf === null) {
+          row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
+            ? Math.round(row.genelHizPerf * (100 / _hedef)) : null;
+        }
 });
     }
   } catch(e) {
