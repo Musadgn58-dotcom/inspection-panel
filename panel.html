@@ -3826,7 +3826,7 @@ async function showInspectorDetail(inspectorName) {
     const token = appConfig.sheetsApiToken;
     if (url && token) {
       try {
-        const data = await jsonpFetch(url, { action: 'getInspectorKayitlar', token, inspectorAdi: inspectorName.normalize('NFC') });
+        const data = await jsonpFetch(url, { action: 'getInspectorKayitlar', token, inspectorAdi: inspectorName.normalize('NFC').trim() });
         if (data.status === 'ok' && data.kayitlar && typeof data.kayitlar === 'object') {
           // Çekilen kayitlar'ı inspector nesnesine işle
           // NOT: Sheets'teki klasman adı ile performansData'daki klasman adı
@@ -3835,8 +3835,9 @@ async function showInspectorDetail(inspectorName) {
           Object.entries(data.kayitlar).forEach(([klasmanAd, kayitlarArr]) => {
             if (!Array.isArray(kayitlarArr) || kayitlarArr.length === 0) return;
             // Önce birebir eşleştir, yoksa normalize edilmiş eşleştir
+            const norm = (s) => s.normalize('NFC').trim().toLowerCase();
             let hedefKey = insKlasmanKeys.find(k => k === klasmanAd)
-              || insKlasmanKeys.find(k => k.trim().toLowerCase() === klasmanAd.trim().toLowerCase());
+              || insKlasmanKeys.find(k => norm(k) === norm(klasmanAd));
             if (!hedefKey) return;
             inspector.klasmanlar[hedefKey].kayitlar = kayitlarArr.map(r => ({
               ...r,
