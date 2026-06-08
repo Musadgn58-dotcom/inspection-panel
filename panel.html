@@ -1866,11 +1866,7 @@ let perfData = null;
     if (perfData && perfData.status === 'ok' && Array.isArray(perfData.performansData) && perfData.performansData.length > 0) {
       performansData = restorePerformansDateObjects(perfData.performansData);
       console.log('✅ Performans verisi yüklendi:', performansData.length, 'inspector');
-     performansData.forEach(row => {
-  const _h = row.hedefVerimlilik || 100;
-  row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-    ? Math.round(row.genelHizPerf * (100 / _h)) : null;
-});
+      // verimlilikPerf Sheets'te doğru hesaplanmış — doğrudan kullan
     }
   } catch(e) {
     console.warn('Performans otomatik çekme hatası:', e.message);
@@ -2971,11 +2967,7 @@ async function pullPerformansFromSheets(silent = false) {
     console.log('📥 getPerformansRaw yanıtı:', JSON.stringify(data).substring(0, 300));
     if (data.status === 'ok' && Array.isArray(data.performansData) && data.performansData.length > 0) {
       performansData = restorePerformansDateObjects(data.performansData);
-     performansData.forEach(row => {
-  const _h = row.hedefVerimlilik || 100;
-  row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-    ? Math.round(row.genelHizPerf * (100 / _h)) : null;
-});
+      // verimlilikPerf Sheets'te doğru hesaplanmış — doğrudan kullan
       saveData();
       renderDashboard();
       updateSidebar();
@@ -3500,11 +3492,6 @@ async function clearDashboardData() {
   currentDashboardPage = 1;
   saveData();
   renderDashboard();
-  const _hm = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
-performansData.forEach(row => {
-  row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-    ? Math.round(row.genelHizPerf * (100 / _hm)) : null;
-});
   renderPerfTabloFromData();
   updateSidebar();
   renderTopInspectors();
@@ -5036,14 +5023,7 @@ async function autoFetchPerfIfNeeded() {
     const data = await jsonpFetch(url, { action: 'getPerformansRaw', token });
     if (data.status === 'ok' && Array.isArray(data.performansData) && data.performansData.length > 0) {
       performansData = restorePerformansDateObjects(data.performansData);
-      // verimlilikPerf değerlerini hedef bazında güncelle
-      const hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
-      performansData.forEach(row => {
-        if (row.verimlilikPerf === undefined || row.verimlilikPerf === null) {
-          row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-            ? Math.round(row.genelHizPerf * (100 / hedef)) : null;
-        }
-      });
+      // verimlilikPerf Sheets'te doğru hesaplanmış — doğrudan kullan
       saveData();
       renderPerfTabloFromData();
       renderDashboard();
@@ -5076,13 +5056,7 @@ function renderPerfTabloFromData(page) {
   if (page !== undefined) _perfPage = page;
 
   const hedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
-
-  performansData.forEach(row => {
-    if (row.verimlilikPerf === undefined || row.verimlilikPerf === null) {
-      row.verimlilikPerf = row.genelHizPerf !== null && row.genelHizPerf !== undefined
-        ? Math.round(row.genelHizPerf * (100 / hedef)) : null;
-    }
-  });
+  // verimlilikPerf Sheets'ten geldiğinde doğru değerde — yeniden hesaplama
 
   const fmtSure = (sn) => {
     if (!sn) return '—';
