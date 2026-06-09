@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inspection Performans Paneli</title>
-<meta name="theme-color" content="#0B1F3A">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="IC Panel">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="ikon.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -954,45 +947,6 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
 .kl-pag-page.active { background: var(--blue2); color: #fff; border-color: var(--blue2); }
 .kl-pag-page:hover:not(.active) { background: var(--lblue2); border-color: var(--blue3); }
 </style>
-  <meta name="application-name" content="Inspection Performans">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Inspection">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0B1F3A">
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png">
-<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png">
-<link rel="manifest" id="pwa-manifest">
-<script>
-(function(){
-  var manifest = {
-    name: "Inspection Performans Paneli",
-    short_name: "Inspection",
-    description: "LC Waikiki Inspection Performans Paneli",
-    start_url: "./",
-    display: "standalone",
-    background_color: "#0B1F3A",
-    theme_color: "#0B1F3A",
-    orientation: "landscape-primary",
-    icons: [
-      { src: "https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: "https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
-    ]
-  };
-  var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
-  if ('serviceWorker' in navigator) {
-    var swCode = [
-      "var CACHE='lc-inspection-v1';",
-      "self.addEventListener('install',function(e){self.skipWaiting();});",
-      "self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));}));});",
-      "self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(function(cached){return cached||fetch(e.request).then(function(resp){if(resp&&resp.status===200&&resp.type==='basic'){var r=resp.clone();caches.open(CACHE).then(function(c){c.put(e.request,r);});}return resp;});}));});"
-    ].join('\n');
-    var swBlob = new Blob([swCode], {type:'text/javascript'});
-    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(){});
-  }
-})();
-</script>
 </head>
 <body>
 
@@ -1763,7 +1717,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwWuvTZtOO0ffjSZr3H4TX8yr3rqmzzMudnJrQ-SouPZ04mrj_PQeOCqPjlBJONs8Pq_g/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxiRUDxY9Xy8bGJAxuidTcp2TUwaYbu2p_oIW8HdM-pcySPusCcNX4GHuwsC7bDhZsSTA/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',          // Panel giriş şifresi — Sheets Config'ten yüklenir, kodda saklanmaz
@@ -7542,36 +7496,6 @@ var _aoHedef       = 100;
 
 var AO_LS_KEY = 'gemini_api_key_perf_panel';
 
-// Sheets Config sekmesinden Gemini key çekip input'a ve localStorage'a yazar
-function _aoFetchGeminiKeyFromSheets() {
-  if (!appConfig.sheetsUrl) return;
-  var url = appConfig.sheetsUrl + '?action=getConfig&token=' + encodeURIComponent(appConfig.token || '');
-  var iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-  var handler = function(event) {
-    try {
-      var data = (typeof event.data === 'string') ? JSON.parse(event.data) : event.data;
-      if (data && data.config && data.config.geminiApiKey) {
-        var key = data.config.geminiApiKey;
-        try { localStorage.setItem(AO_LS_KEY, key); } catch(e) {}
-        var inp = document.getElementById('ao-gkey');
-        if (inp) inp.value = key;
-        aoGkeyStatus('✅ Anahtar Sheets\'ten yüklendi', '#2E7D32');
-      }
-    } catch(e) {}
-    window.removeEventListener('message', handler);
-    try { document.body.removeChild(iframe); } catch(e) {}
-  };
-  window.addEventListener('message', handler);
-  iframe.src = url;
-  // 8 saniye sonra temizle
-  setTimeout(function() {
-    window.removeEventListener('message', handler);
-    try { document.body.removeChild(iframe); } catch(e) {}
-  }, 8000);
-}
-
 function openAnalizOverlay(inspData, inspObj, hedef) {
   _aoData      = inspData;
   _aoInspector = inspObj;
@@ -7597,18 +7521,11 @@ function openAnalizOverlay(inspData, inspObj, hedef) {
   document.getElementById('ao-f-minadet').value  = 0;
   document.getElementById('ao-f-sort').value     = '';
 
-  // Gemini kayıtlı key yükle — önce localStorage, yoksa Sheets'ten çek
-  (function() {
-    try {
-      var savedKey = localStorage.getItem(AO_LS_KEY) || '';
-      if (savedKey) {
-        document.getElementById('ao-gkey').value = savedKey;
-      } else {
-        // localStorage'da yok → Sheets Config'den anlık çek
-        _aoFetchGeminiKeyFromSheets();
-      }
-    } catch(e) {}
-  })();
+  // Gemini kayıtlı key yükle
+  try {
+    var savedKey = localStorage.getItem(AO_LS_KEY) || '';
+    if (savedKey) document.getElementById('ao-gkey').value = savedKey;
+  } catch(e) {}
 
   // Sonuçları sıfırla
   document.getElementById('ao-gresult').style.display  = 'none';
@@ -7870,25 +7787,7 @@ function aoCallGemini(userPrompt, title) {
   var key = '';
   try { key = localStorage.getItem(AO_LS_KEY) || ''; } catch(e) {}
   if (!key) key = (document.getElementById('ao-gkey').value || '').trim();
-  if (!key) {
-    // Sheets'ten çekmeyi dene
-    if (appConfig.sheetsUrl) {
-      aoShowErr('Anahtar bulunamadı. Sheets\'ten yükleniyor, lütfen bekleyin...');
-      _aoFetchGeminiKeyFromSheets();
-      setTimeout(function() {
-        try { key = localStorage.getItem(AO_LS_KEY) || ''; } catch(e) {}
-        if (key) {
-          aoShowErr('');
-          aoCallGemini(userPrompt, title);
-        } else {
-          aoShowErr('Anahtar yüklenemedi. Lütfen Gemini API anahtarını manuel olarak girin.');
-        }
-      }, 4000);
-    } else {
-      aoShowErr('Lütfen önce Gemini API anahtarınızı girin ve kaydedin.');
-    }
-    return;
-  }
+  if (!key) { aoShowErr('Lütfen önce Gemini API anahtarınızı girin ve kaydedin.'); return; }
 
   var fullPrompt = 'Sen bir üretim performans analisti asistanısın. Aşağıdaki inspection/kalite kontrol çalışanına ait performans verileri sana verilmiştir. Bu verileri analiz et ve kullanıcının sorusuna yanıt ver.\n\n'
     + 'PERFORMANS VERİLERİ:\n' + _aoDataSummary() + '\n\n'
