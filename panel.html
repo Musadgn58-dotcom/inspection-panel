@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inspection Performans Paneli</title>
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/lc-Inspection/inspection-panel/main/ikon.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -1717,7 +1719,7 @@ let animationEffect = 'slide'; // slide, fade, zoom, flip
 // APP CONFIG (Tüm Ayarlar)
 // ────────────────────────────
 const APP_CONFIG_KEY = 'lc_inspection_config';
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxVaF0GwY49bWwf_MYJf8Li_dB5oThe0qXcOSMsWl6hhYUu_lwq2Ng1AahOqMQSSCl-kQ/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzoLa8XG0hgJwOXySUY9O0QG3Adlt5fRHHInjbUVn6e1wDVmHiH5cwsm-jBiwzAKfYa/exec';
 const DEFAULT_API_TOKEN  = 'lcw-secret-2024';
 let appConfig = {
   password: '',          // Panel giriş şifresi — Sheets Config'ten yüklenir, kodda saklanmaz
@@ -1817,12 +1819,17 @@ async function pullConfigFromSheets() {
     if (data.status === 'ok' && data.config) {
       if (data.config.password)        appConfig.password        = data.config.password;
       if (data.config.klasmanPassword) appConfig.klasmanPassword = data.config.klasmanPassword;
-      // Gemini API key varsa localStorage'a yaz ve input'a doldur
+      // Gemini API key — Sheets'ten gelen değeri her zaman kullan (tüm cihazlarda senkronize)
       if (data.config.geminiApiKey) {
         try { localStorage.setItem('gemini_api_key_perf_panel', data.config.geminiApiKey); } catch(e) {}
         const keyInput = document.getElementById('ao-gkey');
         if (keyInput) keyInput.value = data.config.geminiApiKey;
         console.log('✅ Gemini API anahtarı Sheets\'ten yüklendi');
+      } else {
+        // Sheets'te key yok — localStorage'ı da temizle (tutarlılık)
+        try { localStorage.removeItem('gemini_api_key_perf_panel'); } catch(e) {}
+        const keyInput = document.getElementById('ao-gkey');
+        if (keyInput) keyInput.value = '';
       }
       localStorage.setItem(APP_CONFIG_KEY, JSON.stringify(appConfig));
       console.log('✅ Config Sheets\'ten çekildi');
