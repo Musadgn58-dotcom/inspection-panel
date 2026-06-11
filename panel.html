@@ -1642,6 +1642,21 @@ label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; 
           </div>
           <span style="font-size:11px;color:var(--muted)" data-i18n="blank_rows_hint">If selected, rows with empty values will be excluded from the calculation.</span>
         </div>
+        <!-- InspectionSonuc — Kaldı Override -->
+        <div style="margin-top:12px;padding:10px 14px;background:linear-gradient(135deg,#FFF3E0 0%,#fff 100%);border:1px solid #FFCC80;border-radius:9px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span style="font-size:15px">🔴</span>
+          <div>
+            <span style="font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap">InspectionSonuc Kolonu</span>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;">Sonuç <strong style="color:#E65100">Kaldı</strong> olan satırlarda örnekleme modu otomatik <strong>Kapalı</strong>'ya alınır → tüm adet kontrol edilir.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px">
+            <label style="margin:0;font-size:11px;color:var(--muted);white-space:nowrap">Sütun:</label>
+            <select id="col-sonuc" onchange="performansHesapla()" style="flex:1">
+              <option value="">— Kullanma —</option>
+            </select>
+          </div>
+          <div id="sonuc-kaldi-ozet" style="font-size:11px;color:#E65100;font-weight:600;display:none;background:#FFF8E1;border:1px solid #FFE082;padding:4px 10px;border-radius:6px;white-space:nowrap;"></div>
+        </div>
         <!-- Örnekleme Modu -->
         <div style="margin-top:12px;padding:10px 14px;background:linear-gradient(135deg,#F3E5F5 0%,#fff 100%);border:1px solid #CE93D8;border-radius:9px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
           <span style="font-size:15px">🔢</span>
@@ -6112,6 +6127,8 @@ function fillColSelects(){
   if (mesaiEl) mesaiEl.innerHTML = '<option value="">— opsiyonel —</option>' + excelCols.map(c=>`<option value="${c}">${c}</option>`).join('');
   const yapilanDepoEl = document.getElementById('col-yapilan-depo');
   if (yapilanDepoEl) yapilanDepoEl.innerHTML = `<option value="">${(translations[currentLang]||translations.tr).filter_none}</option>` + excelCols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const sonucEl = document.getElementById('col-sonuc');
+  if (sonucEl) sonucEl.innerHTML = '<option value="">— Kullanma —</option>' + excelCols.map(c=>`<option value="${c}">${c}</option>`).join('');
   
   // Otomatik tahmin
   const klasmanCol = excelCols[0] || '';
@@ -6132,6 +6149,16 @@ function fillColSelects(){
   // InspectionYapilanDepo otomatik tahmin
   const yapilanDepoColAuto = excelCols.find(c => c.toLowerCase().replace(/[^a-z]/g,'').includes('yapilandepo') || c.toLowerCase().replace(/\s/g,'') === 'inspectionyapilandepo') || excelCols[19] || '';
   if (yapilanDepoColAuto && document.getElementById('col-yapilan-depo')) document.getElementById('col-yapilan-depo').value = yapilanDepoColAuto;
+
+  // InspectionSonuc otomatik tahmin — "sonuc" veya "sonuç" içeren sütun, "ysg" içerenleri öncelikle hariç tut
+  const sonucColAuto = excelCols.find(c => {
+    const norm = c.toLowerCase().replace(/[^a-z0-9]/g,'').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ı/g,'i');
+    return (norm.includes('inspectionsonuc') || norm.includes('inspectionsonuç') || norm === 'sonuc' || norm === 'sonuç') && !norm.startsWith('ysg');
+  }) || excelCols.find(c => {
+    const norm = c.toLowerCase().replace(/[^a-z0-9]/g,'').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ı/g,'i');
+    return norm.includes('sonuc') || norm.includes('sonuç');
+  });
+  if (sonucColAuto && document.getElementById('col-sonuc')) document.getElementById('col-sonuc').value = sonucColAuto;
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -6411,26 +6438,31 @@ function renderPerfTabloFromData(page) {
 // ════════════════════════════════════════════════════════════════════════════════
 
 // Bir Alttan tablosu: =EĞER(R<=20;R; EĞER(R<=32;20; EĞER(R<=50;20; EĞER(R<=80;32; EĞER(R<=125;50;80)))))
+// Bir Alttan örnekleme tablosu
+// BakilacakMiktar aralığı → kontrol edilecek adet
+// ≤13→13, ≤20→20, ≤32→32, ≤50→32, ≤80→50, ≤125→80, ≤200→125, >200→200
 const ORNEKLEME_BIR = [
-  { max: 20,  val: null }, // R'yi olduğu gibi kullan
-  { max: 32,  val: 20   },
-  { max: 50,  val: 20   },
-  { max: 80,  val: 32   },
-  { max: 125, val: 50   },
-  { max: Infinity, val: 80 }
+  { max: 13,       val: 13  },
+  { max: 20,       val: 20  },
+  { max: 32,       val: 32  },
+  { max: 50,       val: 32  },
+  { max: 80,       val: 50  },
+  { max: 125,      val: 80  },
+  { max: 200,      val: 125 },
+  { max: Infinity, val: 200 }
 ];
 
-// İki Alttan: bir alttan'ın bir adım daha aşağısı
-// ≤13→R, ≤20→13, ≤32→13, ≤50→20, ≤80→20, ≤125→32, ≤200→50, >200→80
+// İki Alttan örnekleme tablosu
+// ≤13→13, ≤20→20, ≤32→32, ≤50→32, ≤80→32, ≤125→50, ≤200→80, >200→125
 const ORNEKLEME_IKI = [
-  { max: 13,  val: null },
-  { max: 20,  val: 13   },
-  { max: 32,  val: 13   },
-  { max: 50,  val: 20   },
-  { max: 80,  val: 20   },
-  { max: 125, val: 32   },
-  { max: 200, val: 50   },
-  { max: Infinity, val: 80 }
+  { max: 13,       val: 13  },
+  { max: 20,       val: 20  },
+  { max: 32,       val: 32  },
+  { max: 50,       val: 32  },
+  { max: 80,       val: 32  },
+  { max: 125,      val: 50  },
+  { max: 200,      val: 80  },
+  { max: Infinity, val: 125 }
 ];
 
 function orneklemeAdet(adet, mod) {
@@ -6481,6 +6513,7 @@ function performansHesapla(){
   const bitisCol = document.getElementById('col-bitis')?.value || '';
   const mesaiCol = document.getElementById('col-mesai')?.value || '';
   const yapilanDepoCol = document.getElementById('col-yapilan-depo')?.value || '';
+  const sonucCol = document.getElementById('col-sonuc')?.value || '';
   const orneklemeMod = document.querySelector('input[name="ornekleme-mod"]:checked')?.value || 'kapali';
   const verimlilikHedef = Math.max(1, parseFloat(document.getElementById('inp-verimlilik')?.value) || 100);
 
@@ -6535,11 +6568,26 @@ function performansHesapla(){
   let basariliTarihKayitlar = 0;
   let tarihHataliKayitlar = 0;
 
+  let kaldiSatirSayisi = 0;
+
   excelRows.forEach(row => {
     const excelKlasman = String(row[klasmanCol]||'').trim();
     const ins = String(row[insCol]||'').trim();
     const adetHam = parseFloat(row[adetCol])||0;
-    const adet = orneklemeAdet(adetHam, orneklemeMod);
+
+    // InspectionSonuc "Kaldı" ise bu satır için örnekleme modu kapalı (tüm adet kontrol edilmeli)
+    let satırOrneklemeMod = orneklemeMod;
+    if (sonucCol) {
+      const sonucRaw = String(row[sonucCol] || '').trim();
+      // Türkçe karakter duyarsız karşılaştırma (ı→i, İ→i, ğ→g vs.)
+      const sonucNorm = sonucRaw.toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/İ/g,'i').replace(/ğ/g,'g').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ç/g,'c');
+      if (sonucNorm === 'kaldi' || sonucNorm.includes('kaldi')) {
+        satırOrneklemeMod = 'kapali';
+        kaldiSatirSayisi++;
+      }
+    }
+
+    const adet = orneklemeAdet(adetHam, satırOrneklemeMod);
     const baslangicTarih = baslangicCol ? row[baslangicCol] : null;
     const bitisTarih = bitisCol ? row[bitisCol] : null;
     const mesaiHam = mesaiCol ? row[mesaiCol] : null;
@@ -6629,6 +6677,17 @@ function performansHesapla(){
 
     inspectorMap[ins].toplamAdet += adet;
   });
+
+  // Kaldı özet göstergesi güncelle
+  const kaldiOzet = document.getElementById('sonuc-kaldi-ozet');
+  if (kaldiOzet) {
+    if (sonucCol && kaldiSatirSayisi > 0) {
+      kaldiOzet.style.display = 'block';
+      kaldiOzet.textContent = '🔴 ' + kaldiSatirSayisi + ' satır "Kaldı" → Kapalı mod uygulandı';
+    } else {
+      kaldiOzet.style.display = 'none';
+    }
+  }
 
   // Inspector bazında sonuç map'i oluştur
   const map = {};
