@@ -4666,12 +4666,12 @@ function hesaplaGerceklesenSure(baslangicTarih, bitisTarih) {
     let sn = (gercekBit - gercekBas) / 1000;
 
     // Mola saatleri
-    const ogleB = new Date(gunBase); ogleB.setHours(12, 0, 0, 0);
-    const ogleE = new Date(gunBase); ogleE.setHours(13, 0, 0, 0);
+    const ogleB = new Date(gunBase); ogleB.setHours(11, 45, 0, 0);
+const ogleE = new Date(gunBase); ogleE.setHours(12, 25, 0, 0); 
     const cay1B = new Date(gunBase); cay1B.setHours(10, 0, 0, 0);
     const cay1E = new Date(gunBase); cay1E.setHours(10, 15, 0, 0);
-    const cay2B = new Date(gunBase); cay2B.setHours(15, 0, 0, 0);
-    const cay2E = new Date(gunBase); cay2E.setHours(15, 15, 0, 0);
+    const cay2B = new Date(gunBase); cay2B.setHours(14, 0, 0, 0);
+    const cay2E = new Date(gunBase); cay2E.setHours(14, 15, 0, 0);
 
     function kesisimSn(mB, mE, cB, cE) {
       const start = Math.max(mB.getTime(), cB.getTime());
